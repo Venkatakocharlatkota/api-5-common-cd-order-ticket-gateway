@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
+	<http:listener-config name="api-5_HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6b39f02e-5dbc-4b01-9693-5e4d388379c4" >
+		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="pkcs12" path="${secure::mule.keystore.path}" alias="${secure::mule.keystore.alias}" keyPassword="${secure::mule.keystore.pwd}" password="${secure::mule.keystore.pwd}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<spring:config name="Spring_Config" doc:name="Spring Config" doc:id="6732ffd2-4c6f-4058-995b-e5c84d099eee" files="beans.xml" />
+	<spring:security-manager doc:name="Spring Security manager" doc:id="53878497-f199-4a73-94ce-6b042b713fd0" >
+		<spring:delegate-security-provider name="security-provider" delegate-ref="authenticationManager" />
+	</spring:security-manager>
+	<configuration-properties doc:name="Configuration properties" doc:id="4a10b9a9-0730-4644-b37f-c7541b3acf25" file="common-config.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="59e3a137-4c58-4ec4-98dc-9ce1bd302b1f" file="config-${mule.env}.yaml" key="${mule.key}" />
+	<global-property doc:name="Global Property" doc:id="ef316056-782d-4657-8186-a750acfc262c" name="mule.key" value="hSSGsr08447UQmy8ZtfliTSShaNz2021"/>
+	<global-property doc:name="Global Property" doc:id="8cd1a7c3-9f7a-4863-96b0-bd2b42564f51" name="mule.env" value="dev" />
+	<http:listener-config name="HTTP_Listener_config-for-Testing" doc:name="HTTP Listener config" doc:id="77e46d54-0bb7-4f6f-b79f-b9e4b19af565" doc:description="For Testing&#10;">
+		<http:listener-connection host="localhost" port="9091" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="60a71319-c421-4032-a4c4-82a15cafd071" basePath="${secure::api5.basePath}">
+		<http:request-connection protocol="HTTPS" host="${secure::cd.host}"/>
+	</http:request-config>
+	<sqs:config name="Amazon_SQS_Configuration" doc:name="Amazon SQS Configuration" doc:id="0bfa1803-7cbf-4cf7-bf52-f150fbefc8b8" >
+		<sqs:basic-connection testQueueArn="${secure::SQSTestQueueARN}" accessKey="${secure::SQSAccessKey}" secretKey="${secure::SQSSecretKey}" region="eu-west-1"/>
+	</sqs:config>
+	<cloudhub:config name="CloudHub_Config" doc:name="CloudHub Config" doc:id="77f9ff42-a3d6-4ca3-a51a-1bdc8e9ca4c7" >
+		<cloudhub:connection username="${secure::cloudhub.username}" password="${secure::cloudhub.pwd}" environment="${secure::cloudhub.env}" />
+	</cloudhub:config>
+	<http:request-config name="HTTPS_NEXPLORE_Request_configuration" doc:name="HTTP Request configuration" doc:id="ff5a2cf8-2223-44a8-8f2e-514eddc613ce" doc:description="Nexplore Request" basePath="${secure::api5.supp.basePath}" >
+		<http:request-connection host="${secure::supp.cd.host}" protocol="HTTPS"/>
+	</http:request-config>
+</mule>

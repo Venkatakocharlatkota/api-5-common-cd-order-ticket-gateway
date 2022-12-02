@@ -1,0 +1,42 @@
+mule.keystore.path: keystore/Holcim-Mule-stg-KeyStore.p12
+mule.keystore.alias: keystore-cd-nonprod
+mule.keystore.pwd: "![xYW0LH6s7sjD8I8fE9S1CQ==]"
+mulepassword: "![7T1trwmaUh4+gs5irEF89g==]"
+
+client_id: "![D6u+5O7CZbYjXfNFGGjVltiAhiRHF+/iYJYfAk1pBi4xy7qPjSRS09CsG5gHj9zx]"
+
+##### For country onboarding or offboarding 3 char systemIdentifier needs to be added here to identify appropriate CD API key.
+IND.X-RSM-int-api-key : "![9TkeyTZNRBTOL/MqzOBq+2hs165FByglIRWrcxBUJ5NzyLgNt2tPhW1XAbyDgKcXItX2au7+rzsOd/GMyrRvsi8IbPzaCR4a/Ua+u4lCbR0=]"
+UK.X-RSM-int-api-key : "![ybGzw1XyR6EburQaDnfzhajIJ40LNVkHhufWdKSi3XeyV1FoRYwA2Qiw53VMQbLa22+iDXy69npXKk+coA092/6qRaqBOZM5y6faUxMF6Ac=]"
+SV.X-RSM-int-api-key : "![HMM+Fg03JYeG9skHvUec3Lf0rMLA3hus+KlDdtykGQpIp1/mC5gEwfoVVS8NOHg9YH6xzMJOhk2tvZhmrnctA7MpH0rrHQOVjXxNJvAFVtI=]"
+EC.X-RSM-int-api-key : "![0NZlycHZyu4/fWhTAiv7IeWVxMsCwRSfQwhiIlji3/Y+x/6M4MnxdOFZOd9XQ8VSwWzdZ21tvJSM0SiyQGj+S7jRIksgErGim9Yz3QfTDYw=]"
+CO.X-RSM-int-api-key : "![Q50ZWJWe5l9B5RqyIbe9fpRVaj0vuHYJpftC8wkOHFFAFlEwFsL4Sctj8+QM3px/GB+SJMbUu4oJIhjRUcnECT0HszTM+Boz95DQcTY7uRU=]"
+
+##### Supplier Application Onboarding for Order Creation in CD, Eg. Nexplore
+nexploreuser.X-RSM-int-api-key : "![pHrVQW0QVhlT4bIjsQLN9lZ850ez++Rf833BSXqGbgvybNHRlKJNLVjqNhRVH76A]"
+101315416.X-RSM-int-api-key : "![pHrVQW0QVhlT4bIjsQLN9lZ850ez++Rf833BSXqGbgvybNHRlKJNLVjqNhRVH76A]"
+100502994.X-RSM-int-api-key : "![D2Pg2SzMfqLwZZ5F7ybK2OBUq/FLSIw5wyrBn83aEtQVFjXmY2S7s+XDbhvuhXI9]"
+
+supp.cd.host: "staging.concretedirect.com"
+
+cd.host: "staging.kubikapp.com"
+api5.basePath: "/api/integration"
+
+#### These entries are added to accomodate generic regional requirement during UK deployment ####
+api5.basePath.ord.ext: "/v2/orders/"
+api5.basePath.tkt.ext: "/v2/payloads/"
+api5.basePath.ordstat.ext: "/v2/orders/"
+api5.basePath.error.ext: "/errors"
+
+#### These entries are added to accomodate supplier specific requirement during Nexplore deployment ####
+api5.supp.basePath: "/api/v1/orders/"
+
+SQSTestQueueARN: "arn:aws:sqs:eu-west-1:944927062928:cd-mulesoft-qa-error"
+SQSAccessKey: "AKIA5YAQKXOIKCQPIFZJ"
+SQSSecretKey: "![/EomCtqY3Wh/GiMfLV4VlSuauW8UNhXkc0Rz36NkpnK5JtsAF2Y2QjCm9BS6OhZh]"
+SQSQueueURL: "https://sqs.eu-west-1.amazonaws.com/944927062928/cd-mulesoft-qa-error"
+
+cloudhub.username: "Concrete-Direct-CICD"
+cloudhub.pwd: "![xv4WFWLklaj/hy5i9MRyko9oJeX3Q7Uiku+xf1sTvvs=]"
+cloudhub.env: "c0a59547-e460-436a-aa57-758f1d3d79ac"
+cloudhub.domain: "api-5-common-cd-order-ticket-stg-gateway"

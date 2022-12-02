@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="routeFlow" doc:id="4900d512-7f5a-4f16-80d2-572b9941b1a6" >
+		<logger level="INFO" doc:name="Logger" doc:id="ffdc4840-393a-4331-80a0-79d182295b8f" message="+++ route flow triggered. +++" />
+		<ee:transform doc:name="Transform Message" doc:id="93c316f4-71a4-475c-bf3e-01972b8d7a9c" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="sourceSys" ><![CDATA[message.attributes.headers.sourceSys]]></ee:set-variable>
+				<ee:set-variable variableName="buisObj" ><![CDATA[message.attributes.headers.BuisnessObject]]></ee:set-variable>
+				<ee:set-variable variableName="apiKey" ><![CDATA[%dw 2.0
+output application/java
+var tempKey = "secure::" ++ message.attributes.headers.systemIdentifier ++ "." ++ "X-RSM-int-api-key"
+---
+p(tempKey)]]></ee:set-variable>
+				<ee:set-variable variableName="msgIdentifier" ><![CDATA[message.attributes.headers.messageIdentifier]]></ee:set-variable>
+				<ee:set-variable variableName="orgPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="systemIdentifier" ><![CDATA[message.attributes.headers.systemIdentifier default""]]></ee:set-variable>
+				<ee:set-variable variableName="request_id" ><![CDATA[message.attributes.headers.request_id default uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="errorDesc" ><![CDATA[%dw 2.0
+output application/java
+---
+"CD Error: Failed to post operational data to CD. Contact Mulesoft Support !"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="7fc79caa-cafe-4e1e-b36b-f4eee1f395e8" message="++++ Request with Buisness Object - #[vars.buisObj] and Message Identifier - #[vars.msgIdentifier] is received for CD submission. ++++" />
+		<choice doc:name="Choice" doc:id="ac17b6da-56d4-4b0d-badc-e3d08fb8bc2a" >
+			<when expression='#[vars.buisObj == "OrderData"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="9379c7de-b1a3-40f3-8a56-7db040d63800" message="++++ Source System - #[vars.sourceSys] ++++"/>
+				<set-variable value="#[payload.external_id]" doc:name="Set Variable" doc:id="25e3c7eb-67f5-4689-bd1b-80bb3891bcc2" variableName="external_id"/>
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;p('secure::api5.basePath.ord.ext') ++ vars.external_id]" doc:name="Set Variable" doc:id="3dbdd0cc-ee18-4698-942c-0f44ff01be23" variableName="varDynPath"/>
+				<flow-ref doc:name="Flow Reference" doc:id="b5d96733-7b9a-4abb-b227-3e8cf204a04d" name="commonRequestToCDFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="cbe0a8c8-bcbd-4867-8357-fa9c9e44be2a" message="+++ Successfully Submitted Order data to CD for Order ID - #[vars.external_id].+++"/>
+			</when>
+			<when expression='#[vars.buisObj == "TicketData"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="84af8e7c-63d5-4787-bf27-de7d1081375e" message="++++ Source System - #[vars.sourceSys] ++++"/>
+				<set-variable value="#[payload.external_id]" doc:name="Set Variable" doc:id="b6d39bf6-d929-4a55-a3f2-355e3a9dc031" variableName="external_id"/>
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;p('secure::api5.basePath.tkt.ext') ++ vars.external_id]" doc:name="Set Variable" doc:id="cd22d9f8-df59-4555-8bfb-0f980581a82c" variableName="varDynPath" />
+				<flow-ref doc:name="Flow Reference" doc:id="520ca667-94d9-4c2e-ba47-0489b76c12d0" name="commonRequestToCDFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="40e47a22-e42a-4bf7-8a35-d730744a69c2" message="+++ Successfully Submitted Ticket data to CD for Ticket ID -#[vars.external_id] .+++"/>
+			</when>
+			<when expression='#[vars.buisObj == "SupplierOrder"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="f807b3e3-4992-4eb9-b653-f7864020c60f" message="++++ Source System - #[vars.sourceSys] ++++"/>
+				<set-variable value="#[payload.id]" doc:name="Set Variable" doc:id="ab476041-d926-4a5c-abb5-71f3dafb920d" variableName="order_id"/>
+				<set-variable value='#[vars.order_id]' doc:name="Set Variable" doc:id="56122ea6-defa-4124-b64c-692becf3e76a" variableName="varDynPath"/>
+				<flow-ref doc:name="Flow Reference" doc:id="ed7b295a-1d3d-4c71-82a6-9e4079dce2d1" name="commonRequestToCDFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="0f85619c-fb6b-4eef-aff7-655ccb506133" message="+++ Successfully Submitted Nexplore Order data to CD for Order ID -#[vars.order_id] .+++"/>
+			</when>
+			<when expression='#[vars.buisObj == "ErrorReport"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="12b08e87-6def-449a-937b-ae70d8178bd2" message="++++ Source System - #[vars.sourceSys] ++++"/>
+				<set-variable value="#[payload.external_id]" doc:name="Set Variable" doc:id="6d0446b9-5097-4b32-afd7-95042ebd59bb" variableName="external_id" />
+				<logger level="INFO" doc:name="Logger" doc:id="0744cd26-3635-4b60-b5c5-9ef4649a9555" message="+++ Error Report received for External Id : #[vars.external_id] ++++"/>
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;if(vars.sourceSys == &quot;SAP_LATAM&quot;)(p('secure::api5.basePath.ordstat.ext') ++ &quot;errors&quot;)&#10;else (p('secure::api5.basePath.ordstat.ext') ++ vars.external_id ++ &quot;/errors&quot;)]" doc:name="Set Variable" doc:id="fb27f78f-eea8-47a6-bcbf-8d11ade7ff42" variableName="varDynPath" />
+				<flow-ref doc:name="Flow Reference" doc:id="ea38decb-8147-4411-ad75-b5d8c77652cb" name="commonRequestToCDFlow" />
+				<logger level="INFO" doc:name="Logger" doc:id="92fa850b-2ef4-496a-a607-b5c33262afc7" message="+++ Error Report for External Id : #[vars.external_id]  Ended ++++"/>
+				<logger level="INFO" doc:name="Logger" doc:id="a12e69c8-5f31-4242-b60e-6fcc3541d598" message="+++ Successfully Submitted Status of #[vars.sourceSys] Order where Order ID is -#[if(isEmpty(vars.external_id))(payload.id) else (vars.external_id)] . to CD+++" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="d8ad3d4c-50cd-476c-a09a-924bfdb37698" message="The Customer Object Given is NOT VALID." />
+				<raise-error doc:name="Raise error" doc:id="b3eba2ad-0f88-4136-b46c-c8dc7d75f62c" type="INVALID : INVALID BUISNESS OBJECT" description="The Buisness Object given is NOT VALID. Please contact the Holcim Mulesoft Team. " />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

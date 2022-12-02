@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
+	<flow name="api-5-common-cd-order-ticket-gatewayFlow" doc:id="33207898-f9cb-48d8-86ec-dffe2f64e3b6" >
+		<http:listener doc:name="Listener" doc:id="18d49510-4e57-4749-81fa-3979a3e35534" config-ref="api-5_HTTP_Listener_config" path="/orderPayload" allowedMethods="PUT" >
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+				<http:body ><![CDATA[#[output application/json
+---
+{
+  "status_message" : "Operational Data successfully posted to CD",
+  "status_code" : "200",
+  "error_text" : "No Error"
+}]]]></http:body>
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]" >
+				<http:body ><![CDATA[#[output application/json
+---
+{
+  "status_message" : if (isEmpty(vars.errorDesc)) "Check Error Text below" else vars.errorDesc,
+  "status_code" : vars.errorStatusCode default "500",
+  "error_text" : error.description
+}]]]></http:body>
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<http:basic-security-filter doc:name="Basic security filter" doc:id="e266bfa7-dbe1-41af-8f48-4a89941b23f9" realm="MULE" />
+		<spring:authorization-filter doc:id="b763d15a-807f-42d2-b2f3-6afcde5fd522" requiredAuthorities="ROLE_ADMIN" doc:name="Authorization filter" />
+		<try doc:name="Try" doc:id="86582f9f-b7d2-4364-b05e-0927e7096b06" >
+			<set-variable value="#[message.attributes.headers.client_id]" doc:name="Set Variable" doc:id="133f13a2-d890-46ae-89d3-773950264e25" variableName="client_id" />
+			<validation:is-true doc:id="739a9c1a-d22e-4988-9578-98b939fbe330" expression="#[vars.client_id == Mule::p('secure::client_id')]" doc:name="Is true" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="edf7cf92-a288-4b31-a58d-65be8c6a3e67" >
+					<raise-error doc:name="Raise error" doc:id="08722e5f-4cc9-4aa0-b151-6311557cb169" type="INVALID : CLIENT_ID" description="The Client ID is either NULL or NOT VALID. Please check with the Mulesoft team." />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="1efd0b9d-64c5-4b2a-9530-e31a9edf2720" message="+++ Data Received from Customer in api-5 common CD gateway +++" />
+		<flow-ref doc:name="Flow Reference" doc:id="58b68b11-7482-4272-b257-49e2b335a0ca" name="routeFlow"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="2037ef24-b965-448d-8bad-0245fa9457f5" when='#[error.description contains("failed with status code 422")]' >
+				<logger level="INFO" doc:name="Logger" doc:id="2c4bf18d-556b-4dd7-a072-d0d637edfbf9" message='+++ Error Propagate Section for HTTP 422 Error +++ Error Description from CD : #[error.muleMessage.typedValue]' />
+				<logger level="INFO" doc:name="Logger" doc:id="7c14fc78-5729-45a1-b828-2aafc8b9eb20" message="+++ Payload on which error occured - #[vars.orgPayload] +++"/>
+				<ee:transform doc:name="Transform Message" doc:id="6000867c-0d41-45e2-884d-af1a33b4cc9e" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="errorDesc" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if (isEmpty(error.muleMessage.typedValue.errors) or error.muleMessage.typedValue.errors == [{}]) ("CD Error: Operational Data Validation Error in CD. Contact CD support!")  else if((isEmpty(error.muleMessage.typedValue.errors.detail)) and (!isEmpty(error.muleMessage.typedValue.errors.field[0]))) ("CD Error: " ++ error.muleMessage.typedValue.errors.code[0] ++ ", "  ++ substringAfter(error.muleMessage.typedValue.errors.field[0],".")) else if(isEmpty(error.muleMessage.typedValue.errors.detail)) ("CD Error: Operational Data Validation Error in CD. Contact CD support!")  
+else if (error.muleMessage.typedValue.errors.detail[0] contains("request failed")) ("CD Error:" ++ (substringAfter(error.muleMessage.typedValue.errors.detail[0], "request failed."))) else ("CD Error: " ++ error.muleMessage.typedValue.errors.code[0] ++ ", "  ++ error.muleMessage.typedValue.errors.detail[0])]]></ee:set-variable>
+						<ee:set-variable variableName="errorStatusCode" ><![CDATA["422"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="120b529a-7a67-4759-b239-99126329459f" message="++++ Status : Code - #[vars.errorStatusCode], Description - #[vars.errorDesc] ++++" />
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e227264b-d9c7-4201-840c-e3ca76e15f86" when='#[error.description contains("The Client ID is either NULL or NOT VALID. Please check with the Mulesoft team.")]'>
+				<logger level="INFO" doc:name="Logger" doc:id="8cc71157-a5a3-4e4c-9b25-579dede6e6a5" message="+++ On Error Propagate Section for Invalid Client Id error+++" />
+				<ee:transform doc:name="Transform Message" doc:id="9232ee51-2a0f-436c-be21-c0552e7c0e43">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="sourceSys"><![CDATA[message.attributes.headers.sourceSys]]></ee:set-variable>
+						<ee:set-variable variableName="buisObj"><![CDATA[message.attributes.headers.BuisnessObject]]></ee:set-variable>
+						<ee:set-variable variableName="msgIdentifier"><![CDATA[message.attributes.headers.messageIdentifier]]></ee:set-variable>
+						<ee:set-variable variableName="orgPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+						<ee:set-variable variableName="systemIdentifier"><![CDATA[message.attributes.headers.systemIdentifier default""]]></ee:set-variable>
+						<ee:set-variable variableName="request_id"><![CDATA[message.attributes.headers.request_id default uuid()]]></ee:set-variable>
+						<ee:set-variable variableName="externalId" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.external_id]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="da6eb5d9-b919-4eca-a0e8-063a4f891365" message="+++ Payload on which error occured - #[vars.orgPayload] +++" />
+				<flow-ref doc:name="Flow Reference" doc:id="970edccf-e283-4bd5-8d15-5b1c9fd9ffe0" name="errorHandlerFlow" />
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="416b766e-4d51-4452-a6f0-54ca5550fc1a" type="CUSTOM : ERROR" >
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4ea24e20-fadf-45ac-8811-a55325e761cc" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="5366950c-23c5-4e31-a798-5642fdd92068" message="+++ Error Propagate Section for 'Any' Section for UNKNOWN Error +++ #[payload] and #[error.description]" />
+				<logger level="INFO" doc:name="Logger" doc:id="8e871e10-d4b4-4d25-bcea-28507011ebc2" message="Here is the Erroneous Operational Data, #[vars.buisObj] and payload is #[vars.orgPayload] ++++" />
+				<logger level="INFO" doc:name="Logger" doc:id="2b880aa8-708d-4948-9a37-9e9e801643c5" message="+++ Sending Error Information via email alert  +++" />
+				<set-payload value='#[%dw 2.0&#10;output application/java&#10;---&#10;"Mule API Technical Error - Unexpected Error occured in CD/Mulesoft for " ++ (vars.buisObj default "") ++ " ID: " ++ (payload.external_id default "") ++ " received through Request Id " ++ (vars.request_id default "")]' doc:name="Set Payload" doc:id="5eaec10f-2e76-4e58-8abf-56b0805209d3" />
+				<logger level="INFO" doc:name="Logger" doc:id="c57a7779-a1b7-4317-abbf-4fbe16f1248c" message="+++ #[payload] +++" />
+				<cloudhub:create-notification domain="${secure::cloudhub.domain}" doc:id="59608aa1-f801-45a8-b5e9-548149cc4e48" config-ref="CloudHub_Config" priority="ERROR" doc:name="Create Notification" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
+	<flow name="commonRequestToCDFlow" doc:id="7f6e417f-d410-4ae3-b5ee-dadb51b99a5f" >
+		<logger level="INFO" doc:name="Logger" doc:id="608a305e-4086-4721-9c33-938209420fe3" message="+++In Common Request To CD Flow+++"/>
+		<choice doc:name="Choice" doc:id="25806c2b-12a6-4d79-84d0-7fb8665819f9" >
+			<when expression="#[(p('allowed_country') splitBy(&quot;,&quot;) contains(vars.systemIdentifier))]">
+				<set-variable value="INTERNAL" doc:name="Set Variable" doc:id="38a9d41e-426a-4668-b772-bfd3e82366c3" variableName="requesterType"/>
+				<http:request method="PUT" doc:name="Request" doc:id="7560c606-fed3-4209-850c-78a77f5f3c29" config-ref="HTTP_Request_configuration" path="#[vars.varDynPath]" target="CD_Response">
+			<reconnect frequency="20000" count="5" />
+			<http:body><![CDATA[#[vars.orgPayload]]]></http:body>
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type": "application/json",
+	"Accept" : "application/json",
+	"X-Client-Cert-Verify" : p('X-Client-Cert-Verify'),
+	"X-RSM-int-api-key" : vars.apiKey,
+	"X-Request-Identifier" : vars.request_id
+}]]]></http:headers>
+		</http:request>
+				<logger level="INFO" doc:name="Logger" doc:id="79bb240f-be57-403f-8917-7dcc18a2a4ef" message="+++End of Common Request To CD Flow+++ " />
+				<logger level="INFO" doc:name="Logger" doc:id="445dbf44-ca90-46b9-bb2e-07e5673a2c7d" message="CD Response is #[vars.CD_Response]"/>
+			</when>
+			<when expression="#[(p('supp_allowed_country') splitBy(&quot;,&quot;) contains(vars.systemIdentifier))]">
+				<set-variable value="SUPPLIER" doc:name="Set Variable" doc:id="58705986-43b0-44c4-a5bc-3fa6324f5ed0" variableName="requesterType" />
+				<http:request method="PUT" doc:name="Nexplore Request" doc:id="9542f79a-bd93-4900-96bb-f99e4158c66f" config-ref="HTTPS_NEXPLORE_Request_configuration" path="#[vars.varDynPath]" target="CD_Response" >
+					<reconnect frequency="20000" count="5" />
+					<http:body ><![CDATA[#[vars.orgPayload]]]></http:body>
+					<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type": "application/json",
+	"Accept" : "application/json",
+	"X-Client-Cert-Verify" : p('X-Client-Cert-Verify'),
+	"X-RSM-int-api-key" : vars.apiKey,
+	"X-Request-Identifier" : vars.request_id
+}]]]></http:headers>
+				</http:request>
+				<logger level="INFO" doc:name="Logger" doc:id="2f71dc17-a5fc-4519-99da-272dedd997b1" message="+++End of Common Request To CD Flow+++ " />
+				<logger level="DEBUG" doc:name="Logger" doc:id="3bc66602-5b99-4470-b110-5f48d478e4d4" message="CD Response is #[payload]" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="3d133f30-35e9-4644-85a1-eeec8ff9591e" message="+++ #[vars.systemIdentifier] Country is not configured for Concrete Direct Integration +++"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="58eb3b9d-2838-4aa8-ab67-14b2a397c4ae" type="HTTP:BAD_REQUEST, HTTP:PARSING, EXPRESSION, STREAM_MAXIMUM_SIZE_EXCEEDED" >
+				<logger level="INFO" doc:name="Logger" doc:id="98461c37-843b-4f1b-ae36-e59ff0f6fb36" message="++++Inside HTTP Error Propogate for bad data content and Erroring out ++++ " />
+				<logger level="INFO" doc:name="Logger" doc:id="4472fb3a-9799-471c-8e44-feb37e9d4d24" message="+++ ERROR: Possible Data Content Issue +++"/>
+				<set-variable value="400" doc:name="Set Variable" doc:id="ea930b68-42fd-4f67-9178-eda3a4a5ae5c" variableName="errorStatusCode" />
+				<logger level="INFO" doc:name="Logger" doc:id="53008d55-92fb-4ada-be56-b63dcdda3f4b" message="++++ Here is the Erroneous Operational Data, #[vars.buisObj] and Org. payload is #[vars.orgPayload] ++++" />
+				<logger level="INFO" doc:name="Logger" doc:id="b630b270-2590-40dd-b975-c3284bc6073c" message="+++ Sending Error Information via Email alert +++" />
+				<set-payload value='#[%dw 2.0&#10;output application/java&#10;---&#10;"Mule API Technical Error - Bad data content/Erroneous data for " ++ (vars.buisObj default "") ++ " ID: " ++ (payload.external_id default "") ++ " received through Request ID  " ++ (vars.request_id default "")]' doc:name="Set Payload" doc:id="ece7c38d-aed1-4be2-bdd0-865571a38905" />
+				<logger level="INFO" doc:name="Logger" doc:id="3a7715ef-1872-4e15-ac7d-19168766c8e6" message="+++Message sent via Email - #[payload] +++" />
+				<cloudhub:create-notification domain="${secure::cloudhub.domain}" doc:name="Create Notification" doc:id="175a6446-9dec-4f28-ad5e-543a66557e13" config-ref="CloudHub_Config" priority="ERROR" />
+				<logger level="INFO" doc:name="Logger" doc:id="93bc4dbf-e7bb-43da-80c2-3acde7b86e5a" message="+++ Email Alert Sent for possible Data content issue +++" />
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f4308266-146b-4a27-b95e-090cea519a7e" type="HTTP:BAD_GATEWAY, HTTP:CONNECTIVITY, HTTP:INTERNAL_SERVER_ERROR, HTTP:RETRY_EXHAUSTED, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT" >
+				<logger level="INFO" doc:name="Logger" doc:id="09171752-d47e-4d65-8bb8-570eb3480437" message="++++Inside Error and Continue Segment for HTTP Connectivity in Error Handling +++" />
+				<flow-ref doc:name="Flow Reference" doc:id="fb28c7ee-6bce-4f28-b35f-0e8783c1f2dc" name="errorHandlerFlow" />
+				<logger level="INFO" doc:name="Logger" doc:id="73820da6-839a-47ba-873f-956e15e08ea8" message="+++ ERROR:  Possible CD API is down or unreachable +++" />
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4700929f-954c-41cd-a9c1-516072fab7ab" type="HTTP:BASIC_AUTHENTICATION , HTTP:CLIENT_SECURITY, HTTP:FORBIDDEN, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_FOUND, HTTP:SECURITY, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE" >
+				<logger level="INFO" doc:name="Logger" doc:id="69463736-eb71-4b07-a8a1-a070c72d8204" message="++++Inside Error and Continue Segment in Error Handling +++" />
+				<logger level="INFO" doc:name="Logger" doc:id="9b91f50a-9365-447f-8a8b-d5971ab7b796" message="+++ ERROR: Possible Authentication/Authorization issue +++"/>
+				<flow-ref doc:name="Flow Reference" doc:id="00235838-1a07-4b3d-a39b-e87f21a1dad3" name="errorHandlerFlow" />
+				<logger level="INFO" doc:name="Logger" doc:id="452400bd-43a4-404a-9889-bc8e89c8de93" message="+++ Sending Error Information via Email alert+++" />
+				<set-payload value='#[%dw 2.0&#10;output application/java&#10;---&#10;"Mule API Technical Error - HTTP Gateway/Authentication/Forbidden Error for " ++ (vars.buisObj default "") ++ " ID: " ++ (vars.external_id default "") ++ " received through Request Id " ++ (vars.request_id default "")]' doc:name="Set Payload" doc:id="a37fce6f-b91d-4619-8162-63ce84dd3fa1" />
+				<logger level="DEBUG" doc:name="Logger" doc:id="a2582ab8-6702-4e6c-bca1-5444783412d4" message="+++ #[payload] +++" />
+				<cloudhub:create-notification domain="${secure::cloudhub.domain}" doc:name="Create Notification" doc:id="96a70d60-a86e-4cca-829d-f933339bc717" config-ref="CloudHub_Config" priority="ERROR" />
+				<logger level="INFO" doc:name="Logger" doc:id="c4060974-848d-49a3-9ba7-b0dfdf17dfde" message="+++ Email Alert Sent for CD API authorization/authentication issue +++" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

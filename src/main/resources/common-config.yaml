@@ -1,0 +1,6 @@
+X-Message-Type : "SYSTEM"
+X-Client-Cert-Verify : "SUCCESS"
+### For country onboarding or offboarding 3 char systemIdentifier needs to be added here to identify appropriate CD API key.
+allowed_country: "IND,UK,SV,CO,EC"
+###Supplier Application Onboarding for Order Creation in CD, Eg. Nexplore
+supp_allowed_country: "101315416,100502994,101334396,101334060"

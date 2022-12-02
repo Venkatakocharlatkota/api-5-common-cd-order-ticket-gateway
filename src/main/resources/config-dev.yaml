@@ -1,0 +1,36 @@
+mule.keystore.path: keystore/Holcim-Mule-dev-KeyStore.p12
+mule.keystore.alias: keystore-cd-nonprod
+mule.keystore.pwd: "![bR4VSKT/V2+cET+jONPIrg==]"
+mulepassword: "![g1BKxm0GRCt6BHcaISZJBA==]"
+
+client_id: "![/6TQIO1upn4mQaUX5/LdKUW2+moKvHrqV/hKwrYGMrc7VVLebDvPJofFPEyq3HVB]"
+
+IND.X-RSM-int-api-key : "![MTk7/Z3hldwLkWRemKxU6I5O4rkm0MJTPjZTkgU7JRu817RN9/ZgQlxbEaoejFHzo0syStC41FJ8UnbVh2jaV6GbMHG7jT4k0Kz/Te4Cf+o=]"
+UK.X-RSM-int-api-key : "![IColacJtrW+v3+xJ/RGh/pbRHOHKdIBUGuxSHrr7EnSXFQYaCX5xmxVW1WPu8UtzRHpircy7eUAlIjDGCI8jNM4yb92DkMiqUOlM+z+ID9g=]"
+DE.X-RSM-int-api-key : "![9FeIAG03vhmmVUI8OVCJYfpgd+YGaXVnZ5gkM/WivYUfbG3J/A0k8zt/vvivivAP]"
+
+supp.cd.host: "staging.concretedirect.com"
+
+cd.host: "staging.kubikapp.com"
+api5.basePath: "/api/integration"
+
+#### These entries are added to accomodate generic regional requirement during UK deployment ####
+api5.basePath.ord.ext: "/v2/orders/"
+api5.basePath.tkt.ext: "/v2/payloads/"
+api5.basePath.ordstat.ext: "/v2/orders/"
+api5.basePath.error.ext: "/errors"
+
+#### These entries are added to accomodate supplier specific requirement during Nexplore deployment ####
+api5.supp.basePath: "/api/v1/orders/"
+
+SQSTestQueueARN: "arn:aws:sqs:eu-west-1:379218615267:cd-mulesoft-dv-error-queue"
+SQSAccessKey: "AKIAVQSZQ3PR4HTQ5Q76"
+SQSSecretKey: "![3nvftpjYPhyfPX0dwhTVH0BMiqqAb38wk0b6bTeUyfF9vvfkXdLxTUUeTBJtWyd2]"
+SQSQueueURL: "https://sqs.eu-west-1.amazonaws.com/379218615267/cd-mulesoft-dv-error-queue"
+
+cloudhub.username: "Concrete-Direct-CICD"
+cloudhub.pwd: "![HGeEXUOYhl78axu8xp1wxek/R0SMQysWyGeyt4eApYA=]"
+cloudhub.env: "61093a8e-1745-49f7-ac2a-361e2f7d211c"
+cloudhub.domain: "api-5-common-cd-order-ticket-dev-gateway"
+
+

@@ -1,0 +1,40 @@
+mule.keystore.path: "prod_keystore/Holcim-Mule-prd-KeyStore.p12"
+mule.keystore.alias: "keystore-cd-prod"
+mule.keystore.pwd: "![x15JdCtCXvEnVqy73b9m1w==]"
+mulepassword: "![g/3F24kJXHRq4Gu9Mp6spNxQHCKFdzzCYbF3QV8Aze1E03n6Z7EXSr9XaAZASc4i]"
+
+client_id: "![PnSf/bEkw7fPErn8CEKWru6+YBRRvwLqGizv0OU5WeRjCmFhDzpGAaCotRmPwCv1]"
+IND.X-RSM-int-api-key : "![DOfjofDzJZuz1mfvSTzH8PldNGtapgL1xVYMXblhT3fPtQGnDDQ3Sd3NMwES9UtPaSWYlp22b1vRZ8UaH0z7s2lkK0NSNRQxSPhQXf1G+qI=]"
+UK.X-RSM-int-api-key: "![jxIHT0IZjB1gKoBHOfyP1JLAd4rL7YrxosN6Mb6bEkqTjrt/xK3rnr9bgEYJF6xgs/ng2nJ1P1pXp9C2l06sbrxD2N8qMRGkC8hkQZMPH6s=]"
+DE.X-RSM-int-api-key : "![0V9GG7BeHCBJ3zjcTHpygPxg2wm3mMRacAbLZ8k4GUNJgPQWWIO9d/q8x4T3t0Bd]"
+SV.X-RSM-int-api-key: "![omtMZZ4eZbtIA1mfc/453sZYasNkSsyEmt0+2W+uy72hU7fouYYu8IM8w2RsbYGvwprHt9CYagrNfja+78nJSFMclC3niYYL3QowprawasQ=]"
+EC.X-RSM-int-api-key: "![k1tpHGVDczXIrwaxrfEEB67ufaugGBevm8mGoSwzZxlUZkKYO3vL4w1Zl0vGMbRdNN60wSIwvF6zRaNNoAAlrm5RY0fM71VLGxMXX/QN7KQ=]"
+CO.X-RSM-int-api-key: "![EvcgG0wnK7hCv4FwXUJZrXlqrCezX5Xnyuc16D+hJhokbV/6C97LXs/7MHt+y37irtm4OaffmmPDJJxjM3RKB5lVBUhdPC1OpivocwZSBLY=]"
+
+##### Supplier Application Onboarding for Order Creation in CD, Eg. Nexplore
+101334396.X-RSM-int-api-key : "![1nkbSqVR9liX7+aDAHhkLjtzLZDd6TJHqN9G6HBCKlEkiqu7qD3i9bAMe1jP1BIb]"
+101334060.X-RSM-int-api-key: "![+e05eEvfa/84mJYISl9YucXS0HNjKsaETj5CznWw0DmuhucWYGuocdinmYvwadWZ]"
+
+supp.cd.host: "customer.concretedirect.com"
+
+cd.host: "production.kubikapp.com"
+api5.basePath: "/api/integration"
+
+#### These entries are added to accomodate generic regional requirement during UK deployment ####
+api5.basePath.ord.ext: "/v2/orders/"
+api5.basePath.tkt.ext: "/v2/payloads/"
+api5.basePath.ordstat.ext: "/v2/orders/"
+api5.basePath.error.ext: "/errors"
+
+#### These entries are added to accomodate supplier specific requirement during Nexplore deployment ####
+api5.supp.basePath: "/api/v1/orders/"
+
+SQSTestQueueARN: "arn:aws:sqs:eu-west-1:944927062928:cd-mulesoft-pd-error"
+SQSAccessKey: "AKIA5YAQKXOIKCQPIFZJ"
+SQSSecretKey: "![0y3Db6vBoSxeqDE4sxtYI1MNk2uWGlvfS+BlplJN3Gx40MryA61i73bQf0KSe1aP]"
+SQSQueueURL: "https://sqs.eu-west-1.amazonaws.com/944927062928/cd-mulesoft-pd-error"
+
+cloudhub.username: "Concrete-Direct-CICD"
+cloudhub.pwd: "![/GE+rQDJWaSEJA8T0bEAypWRqardGArjM6aJ37nMx2M=]"
+cloudhub.env: "afc1d43b-108a-4b07-89d2-5c9704a9e325"
+cloudhub.domain: "api-5-common-cd-order-ticket-gateway"

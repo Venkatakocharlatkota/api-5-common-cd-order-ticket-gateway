@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
+	<flow name="errorHandlerFlow" doc:id="fd9552e4-ede5-49a4-b544-ce2ef7a7f885" >
+	<choice doc:name="Choice" doc:id="1ec04cd0-c1da-4c88-8461-05bad5b7fcf2" >
+			<when expression='#[(vars.requesterType == "INTERNAL") or (error.description contains("The Client ID is either NULL or NOT VALID. Please check with the Mulesoft team."))]'>
+				<try doc:name="Try" doc:id="fb24d9f1-c556-4691-a219-734850f64ea3">
+					<ee:transform doc:name="Transform Message" doc:id="9353c7ad-6f78-4370-9983-ebe98283e2f4">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn = "everywhere"
+---
+vars.orgPayload ++ {"client_id": vars.client_id} ++ {"sourceSys": vars.sourceSys} ++ {"buisObj": vars.buisObj} ++ {"msgIdentifier": vars.msgIdentifier} ++ {"systemIdentifier": vars.systemIdentifier} ++ {"request_id": vars.request_id}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="6e8d12e6-22a2-4e82-b54c-ffd7bf065f85" message="+++ Error Payload with Headers to be sent to sqs for further processing +++" />
+					<ee:transform doc:name="Transform Message" doc:id="972b6f00-e5b3-4afe-9b2f-f0034ad3003c">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	delaySeconds: 0,
+	body: write(payload, "application/json"),
+	messageAttributes: {
+		"AccountId": {
+			"stringValue" : "000123456",
+			"dataType" : "String.AccountId"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+		"NumberId": {
+			"stringValue" : "230.000000000000000001",
+			"dataType" : "Number"
+		} as Object {
+			class : "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		}
+	} as Object {
+		class: "java.util.HashMap"
+	}
+} as Object {
+	class: "org.mule.extension.sqs.api.model.Message"
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="1e543aa3-3488-402c-be36-110e93c6f1d1" message="+++Header Details ::: Source System - #[vars.sourceSys] , Business Object - #[vars.buisObj], Id - #[vars.externalId]  , System Identifier - #[vars.systemIdentifier] ,  Buisness Object - #[vars.buisObj] , Message Identifier - #[vars.msgIdentifier] +++" />
+					<until-successful maxRetries="5" doc:name="Until Successful" doc:id="8bc9eabc-01d7-40e3-9e03-3d7832123c78" millisBetweenRetries="30000">
+				<sqs:send-message doc:name="Send message" doc:id="1bb791e5-7aa5-422b-96c6-4612721d9df5" config-ref="Amazon_SQS_Configuration" queueUrl="${secure::SQSQueueURL}" />
+					
+</until-successful>
+					<logger level="INFO" doc:name="Logger" doc:id="36fb804a-1aa5-4f75-8d15-1e85eef44e8a" message="+++ Error Message written into Error SQS successfully for Auto Reprocessing. Check API-8 +++" />
+				</try>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="ce9e399c-92f7-48bf-866f-a293c5389abd" type="CUSTOM : ERROR" description="#[error.description]"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="77f43dc6-abd2-4c93-a24c-b18b65f535c9" type="CUSTOM : ERROR">
+				<logger level="INFO" doc:name="Logger" doc:id="2c2853be-a437-445f-b155-07c364a72d12" message="+++ Error Segment for Supplier Connectivity or Authentication error +++"/>
+				<set-variable value="Connectivity to Concrete Direct Failed. Either CD API is down or Authentication failed!" doc:name="Set Variable" doc:id="d4b023cd-ff67-4b46-b8db-4f2177840007" variableName="errorDesc"/>
+				<logger level="INFO" doc:name="Logger" doc:id="32f4b186-2098-4f95-ab93-8c0a56640965" message="+++ Error  Description - #[vars.errorDesc]"/>
+			</on-error-propagate>
+		</error-handler>
+				
+</flow>
+</mule>
